@@ -1,0 +1,9 @@
+Ok-To-Test+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Code-Review+1: Artem Senichev <artemsen@gmail.com>
+Verified+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Code-Review+2: Alexander Filippov <a.filippov@yadro.com>
+Submitted-by: Alexander Filippov <a.filippov@yadro.com>
+Submitted-at: Mon, 16 Mar 2020 17:48:39 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/c/openbmc/meta-yadro/+/29832
+Project: openbmc/meta-yadro
+Branch: refs/heads/master
