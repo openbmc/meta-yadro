@@ -1,0 +1,161 @@
+From c5241ddd213552758988fa208b0b773ef741a289 Mon Sep 17 00:00:00 2001
+From: Alexander Filippov <a.filippov@yadro.com>
+Date: Tue, 7 Apr 2020 16:45:41 +0300
+Subject: [PATCH] Add system reset status support
+
+This is backport of patch file from intel-bmc/openbmc repository.
+  https://github.com/Intel-BMC/openbmc/blob/intel/meta-openbmc-mods/meta-common/recipes-bsp/u-boot/files/0020-Add-system-reset-status-support.patch
+
+Will display the reset reasons in u-boot,
+and save the reset reasons into kernel command line,
+for applications to query.
+
+Signed-off-by: Alexander Filippov <a.filippov@yadro.com>
+---
+ .../include/asm/arch-aspeed/ast_g5_platform.h |  1 +
+ arch/arm/include/asm/arch-aspeed/ast_scu.h    |  2 +-
+ arch/arm/mach-aspeed/ast-scu.c                |  6 +-
+ board/aspeed/ast-g5/ast-g5.c                  | 74 +++++++++++++++++++
+ 4 files changed, 81 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/include/asm/arch-aspeed/ast_g5_platform.h b/arch/arm/include/asm/arch-aspeed/ast_g5_platform.h
+index 42108733f3..d2a4268cd7 100644
+--- a/arch/arm/include/asm/arch-aspeed/ast_g5_platform.h
++++ b/arch/arm/include/asm/arch-aspeed/ast_g5_platform.h
+@@ -188,5 +188,6 @@
+ #define AST_FORMATTER_MEM_SIZE		0xC00000 /* 12MB */
+ #define AST_FORMATTER_MEM_BASE 		(AST_H264_MEM_BASE + AST_H264_MEM_SIZE)
+ 
++#define CONFIG_BOARD_LATE_INIT 1 /* Call board_late_init */
+ 
+ #endif
+diff --git a/arch/arm/include/asm/arch-aspeed/ast_scu.h b/arch/arm/include/asm/arch-aspeed/ast_scu.h
+index dcbc6730d4..b428f386d6 100644
+--- a/arch/arm/include/asm/arch-aspeed/ast_scu.h
++++ b/arch/arm/include/asm/arch-aspeed/ast_scu.h
+@@ -29,7 +29,7 @@
+ #define __AST_SCU_H
+ 
+ extern void ast_scu_show_system_info (void);
+-extern void ast_scu_sys_rest_info(void);
++extern u32 ast_scu_sys_rest_info(void);
+ extern void ast_scu_security_info(void);
+ extern u32 ast_scu_revision_id(void);
+ extern u32 ast_scu_get_vga_memsize(void);
+diff --git a/arch/arm/mach-aspeed/ast-scu.c b/arch/arm/mach-aspeed/ast-scu.c
+index 12de9b8036..d335a7c454 100644
+--- a/arch/arm/mach-aspeed/ast-scu.c
++++ b/arch/arm/mach-aspeed/ast-scu.c
+@@ -482,22 +482,26 @@ void ast_scu_security_info(void)
+ 	}
+ }
+ 
+-void ast_scu_sys_rest_info(void)
++u32 ast_scu_sys_rest_info(void)
+ {
+ 	u32 rest = ast_scu_read(AST_SCU_SYS_CTRL);
+ 
+ 	if (rest & SCU_SYS_EXT_RESET_FLAG) {
+ 		printf("RST : External\n");
+ 		ast_scu_write(SCU_SYS_EXT_RESET_FLAG, AST_SCU_SYS_CTRL);
++		rest = SCU_SYS_PWR_RESET_FLAG;
+ 	} else if (rest & SCU_SYS_WDT_RESET_FLAG) {
+ 		printf("RST : Watchdog\n");
+ 		ast_scu_write(SCU_SYS_WDT_RESET_FLAG, AST_SCU_SYS_CTRL);
++		rest = SCU_SYS_WDT_RESET_FLAG;
+ 	} else if (rest & SCU_SYS_PWR_RESET_FLAG) {
+ 		printf("RST : Power On\n");
+ 		ast_scu_write(SCU_SYS_PWR_RESET_FLAG, AST_SCU_SYS_CTRL);
++		rest = SCU_SYS_PWR_RESET_FLAG;
+ 	} else {
+ 		printf("RST : CLK en\n");
+ 	}
++	return rest;
+ }
+ 
+ u32 ast_scu_get_vga_memsize(void)
+diff --git a/board/aspeed/ast-g5/ast-g5.c b/board/aspeed/ast-g5/ast-g5.c
+index 12496cea09..213db4a2bc 100644
+--- a/board/aspeed/ast-g5/ast-g5.c
++++ b/board/aspeed/ast-g5/ast-g5.c
+@@ -105,3 +105,77 @@ void hw_watchdog_reset(void)
+ 	writel(0x4755, AST_WDT2_BASE + 0x08);
+ }
+ #endif /* CONFIG_WATCHDOG */
++
++#ifdef CONFIG_BOARD_LATE_INIT
++static void update_bootargs_cmd(const char *key, const char *value)
++{
++    int buf_len;
++    char *buf;
++    char *cmdline;
++    char comp_key[128];
++
++    if (!key || (key[0] == '\0'))
++    {
++        printf("%s - Empty key not allowed\n", __func__);
++        return;
++    }
++
++    cmdline = getenv("bootargs");
++
++    /* Allocate space for maximum possible new command line */
++    if (value)
++        buf_len = strlen(cmdline) + strlen(key) + 3 + strlen(value);
++    else
++        buf_len = strlen(cmdline) + strlen(key) + 3;
++
++    buf = malloc(buf_len);
++    if (!buf)
++    {
++        printf("%s: out of memory\n", __func__);
++        return;
++    }
++    memset(buf, 0, buf_len);
++
++    if (!cmdline)
++    {
++        /* lets add key-value, though bootargs are empty */
++        snprintf(buf, buf_len, "%s=%s", key, (value ? value : ""));
++        setenv("bootargs", buf);
++        free(buf);
++        return;
++    }
++
++    snprintf(comp_key, sizeof(comp_key), "%s=", key);
++    char *start = strstr(cmdline, comp_key);
++
++    /* Check for full word match. Match should be start of cmdline
++     * or there should be space before match */
++    if (start && ((start == cmdline) || (*(start - 1) == ' ')))
++    {
++        char *end = strchr(start, ' ');
++        strncpy(buf, cmdline, (start - cmdline));
++
++        if (end)
++            snprintf(buf, buf_len, "%s%s=%s %s", buf, key, (value ? value : ""),
++                     end + 1);
++        else
++            snprintf(buf, buf_len, "%s%s=%s", buf, key, (value ? value : ""));
++    }
++    else
++    {
++        snprintf(buf, buf_len, "%s %s=%s", cmdline, key, (value ? value : ""));
++    }
++
++    setenv("bootargs", buf);
++    free(buf);
++}
++
++int board_late_init(void)
++{
++    char value[32];
++    snprintf(value, sizeof(value) - 1, "0x%x", ast_scu_sys_rest_info());
++    update_bootargs_cmd("resetreason", value);
++
++    return 0;
++}
++#endif /* CONFIG_BOARD_LATE_INIT */
+-- 
+2.21.1
+
