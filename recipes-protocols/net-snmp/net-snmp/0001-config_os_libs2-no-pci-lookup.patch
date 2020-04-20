@@ -1,0 +1,15 @@
+--- net-snmp-5.7.3.orig/configure.d/config_os_libs2	2017-11-23 15:35:13.104551481 +0300
++++ net-snmp-5.7.3/configure.d/config_os_libs2	2017-11-23 15:36:07.839771053 +0300
+@@ -190,9 +190,9 @@
+ #   libpci
+ #        (for if-mib description)
+ #
+-NETSNMP_SEARCH_LIBS(pci_lookup_name, pci,
+-	AC_DEFINE(HAVE_PCI_LOOKUP_NAME, 1,
+-		[define if you have pci_lookup_name()]),,,LMIBLIBS)
++# NETSNMP_SEARCH_LIBS(pci_lookup_name, pci,
++# 	AC_DEFINE(HAVE_PCI_LOOKUP_NAME, 1,
++# 		[define if you have pci_lookup_name()]),,,LMIBLIBS)
+ 
+ #   LM-SENSORS-MIB support
+ #
