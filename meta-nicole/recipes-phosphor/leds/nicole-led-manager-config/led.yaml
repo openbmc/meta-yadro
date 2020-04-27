@@ -7,11 +7,11 @@ enclosure_identify:
         Action: 'Blink'
         Priority: 'Blink'
 enclosure_fault: &SYS_FAULT
-    alarm_red:
+    fault:
         Action: 'Blink'
         Priority: 'Blink'
 enclosure_warning: &FRU_FAULT
-    alarm_yellow:
+    attention:
         Action: 'Blink'
         Priority: 'Blink'
 
