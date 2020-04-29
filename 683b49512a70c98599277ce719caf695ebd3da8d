@@ -1,0 +1,8 @@
+Ok-To-Test+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Verified+1: Jenkins <openbmc-ci-admin@ozlabs.org>
+Code-Review+2: Alexander Amelkin <a.amelkin@yadro.com>
+Submitted-by: Alexander Amelkin <a.amelkin@yadro.com>
+Submitted-at: Wed, 29 Apr 2020 11:59:09 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/c/openbmc/meta-yadro/+/31689
+Project: openbmc/meta-yadro
+Branch: refs/heads/master
