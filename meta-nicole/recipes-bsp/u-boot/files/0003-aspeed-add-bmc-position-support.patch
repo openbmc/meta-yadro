@@ -1,0 +1,59 @@
+From 03de90aee1551a0b96d3bd942e0436da5ddca52c Mon Sep 17 00:00:00 2001
+From: Alexander Filippov <a.filippov@yadro.com>
+Date: Fri, 22 May 2020 11:45:31 +0300
+Subject: [PATCH] aspeed: add bmc position support
+
+There are two Nicoles in one chassis in the Tatlin hardware.
+The position is encoded by a pin, read by an MCU, and then translated
+to the BMC via GPIO pin GPIOE1.
+
+This reads the GPIO pin state and put is as a bootargs item.
+
+Signed-off-by: Alexander Filippov <a.filippov@yadro.com>
+---
+ arch/arm/mach-aspeed/ast-late-init.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/arch/arm/mach-aspeed/ast-late-init.c b/arch/arm/mach-aspeed/ast-late-init.c
+index 72e7d15e5f..ef801682af 100644
+--- a/arch/arm/mach-aspeed/ast-late-init.c
++++ b/arch/arm/mach-aspeed/ast-late-init.c
+@@ -5,6 +5,7 @@
+ 
+ #include <common.h>
+ 
++#include <asm/arch/aspeed-gpio.h>
+ #include <asm/arch/ast_scu.h>
+ #include <asm/arch/regs-scu.h>
+ 
+@@ -105,9 +106,27 @@ static void set_reset_reason(void)
+     }
+ }
+ 
++static void set_bmc_position(void)
++{
++    unsigned gpio = ASPEED_GPIO(E, 1);
++    int position;
++
++    /* Init GPIO */
++    aspeed_gpio_set_direction(gpio, ASPEED_GPIO_INPUT);
++    aspeed_gpio_disable_interrupt(gpio);
++
++    position = aspeed_gpio_get_value(gpio);
++    if (position >= 0)
++    {
++        printf("BMC Position: %d\n", position);
++        update_bootargs_cmd("bmcposition", position ? "1" : "0");
++    }
++}
++
+ int board_late_init(void)
+ {
+     set_reset_reason();
++    set_bmc_position();
+ 
+     return 0;
+ }
+-- 
+2.25.4
+
