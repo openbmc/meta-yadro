@@ -1,0 +1,9 @@
+Ok-To-Test+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Verified+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Code-Review+1: Artem Senichev <artemsen@gmail.com>
+Code-Review+2: Alexander Amelkin <a.amelkin@yadro.com>
+Submitted-by: Alexander Amelkin <a.amelkin@yadro.com>
+Submitted-at: Wed, 15 Jul 2020 15:14:51 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/c/openbmc/meta-yadro/+/34637
+Project: openbmc/meta-yadro
+Branch: refs/heads/master
