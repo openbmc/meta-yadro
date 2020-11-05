@@ -1,0 +1,10 @@
+Ok-To-Test+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Verified+1: OpenBMC CI <openbmcbump-ci@yahoo.com>
+Code-Review+2: Alexander Filippov <a.filippov@yadro.com>
+Code-Review+1: Artem Senichev <artemsen@gmail.com>
+Code-Review+1: Andrei Kartashev <a.kartashev@yadro.com>
+Submitted-by: Patrick Williams <patrick@stwcx.xyz>
+Submitted-at: Thu, 05 Nov 2020 12:57:00 +0000
+Reviewed-on: https://gerrit.openbmc-project.xyz/c/openbmc/meta-yadro/+/37930
+Project: openbmc/meta-yadro
+Branch: refs/heads/master
